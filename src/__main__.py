@@ -1,7 +1,6 @@
-from whatsChat import chat
-import re
-import os
-import csv
+import sys, os, re, csv
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from lib.whatsChat import chat
 import urllib.request
 import json
 import urllib

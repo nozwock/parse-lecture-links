@@ -3,7 +3,7 @@ import json
 import urllib
 
 #change to yours VideoID or change url inparams
-def ytbTitle(id):
+def YoutubeTitle(id):
     VideoID = id 
     params = {"format": "json", "url": "https://www.youtube.com/watch?v=%s" % VideoID}
     url = "https://www.youtube.com/oembed"
