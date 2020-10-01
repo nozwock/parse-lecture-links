@@ -159,11 +159,9 @@ if isTermux:
     #Copy to clipboard
     os.system('termux-clipboard-set < %s'%(ExpFileName))
     #Clean up
-    os.remove(ChatFilePath)
     os.remove(ExpFileName)
     #Verbose message
     os.system('termux-toast -s -b white -c black Copied to clipboard!')
     #Open link to edit with new data
-    os.system('termux-open-url https://rentry.co/jksdropperlectures/edit')
-else:
-    os.remove(ChatFilePath)
+    os.system('termux-open-url %s'%getoutput('cat ~/.link'))
+os.remove(ChatFilePath)
