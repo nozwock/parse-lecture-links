@@ -1,17 +1,28 @@
+#! Script made for a specific use case
 import sys, os, re, csv
 dir=lambda e: os.path.dirname(e)
 sys.path.append(dir(dir(os.path.abspath(__file__))))
 from tools.data_scraping import YoutubeTitle
 from lib.whatsChat import chat
+from subprocess import getoutput
+from platform import system
+from shutil import which
 
 
 ChatFilePath="./WhatsApp Chat with Dropper 2021.txt"
 CachePath="./cache.csv"
 
+cmdExists=lambda cmd: which(cmd) is not None
+if system().lower()=="linux":
+    isTermux=getoutput("echo $PREFIX | grep 'com.termux'").strip() != ''
+else:
+    isTermux=False
+
 try:
     parsedData=chat(ChatFilePath).get()
 except:
-    os.system('termux-toast -s -b white -c black Error -1')
+    if cmdExists('termux-toast'):
+        os.system('termux-toast -s -b white -c black Error FileNotFound')
     exit(-1)
 
 cache_exists=os.path.isfile(CachePath)
@@ -115,7 +126,8 @@ for i, j in enumerate(parsedData):
                 dataBuffer.append(YotubeTitle(id))
             except Exception as e:
                 print(repr(e))
-                os.system('termux-toast -s -b white -c black Error 404')
+                if cmdExists('termux-toast'):
+                    os.system('termux-toast -s -b white -c black Connection Error')
                 continue
             #Generating cache
             with open(CachePath,'a+') as f:
@@ -130,7 +142,7 @@ for i, j in enumerate(parsedData):
     dataBuffer.append('/'.join(dt))
     recLectureData.append(dataBuffer)
 
-ExpFileName='tmp.md'
+ExpFileName='export.md'
 with open(ExpFileName,'w+') as f:
     f.write('####Recent ↑\n')
     for i, j in enumerate(recLectureData[::-1]):
@@ -140,12 +152,15 @@ with open(ExpFileName,'w+') as f:
         f.write(f'> [{j[1]}]({j[0]})')
         if pos: f.write('\n\n')
           
-#Copy to clipboard
-os.system('termux-clipboard-set < %s'%(ExpFileName))
-#Clean up
-os.remove(ChatFilePath)
-os.remove(ExpFileName)
-#Verbose message
-os.system('termux-toast -s -b white -c black Copied to clipboard!')
-#Open link to edit with new data
-os.system('termux-open-url https://rentry.co/jksdropperlectures/edit')
+if isTermux:
+    #Copy to clipboard
+    os.system('termux-clipboard-set < %s'%(ExpFileName))
+    #Clean up
+    os.remove(ChatFilePath)
+    os.remove(ExpFileName)
+    #Verbose message
+    os.system('termux-toast -s -b white -c black Copied to clipboard!')
+    #Open link to edit with new data
+    os.system('termux-open-url https://rentry.co/jksdropperlectures/edit')
+else:
+    os.remove(ChatFilePath)
