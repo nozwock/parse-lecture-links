@@ -2,7 +2,7 @@ from wchat import chat
 import re
 	
 #parsing recorded lectures links
-ch_path="./WhatsApp Chat with Dropper 2021.txt"
+ch_path=""
 parsedData=chat(ch_path).get()
 print(f'source: {ch_path}')
 recLectureData=[]

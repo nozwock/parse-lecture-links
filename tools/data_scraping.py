@@ -2,7 +2,7 @@ import urllib.request
 import json
 import urllib
 
-#change to yours VideoID or change url inparams
+
 def YoutubeTitle(id):
     VideoID = id 
     params = {"format": "json", "url": "https://www.youtube.com/watch?v=%s" % VideoID}

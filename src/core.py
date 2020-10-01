@@ -3,34 +3,37 @@ import sys, os, re, csv
 dir=lambda e: os.path.dirname(e)
 sys.path.append(dir(dir(os.path.abspath(__file__))))
 from tools.data_scraping import YoutubeTitle
-from lib.whatsChat import chat
+from lib.whatsChat import ChatParser
+from argparse import ArgumentParser
 from subprocess import getoutput
 from platform import system
 from shutil import which
 
 
-ChatFilePath="./WhatsApp Chat with Dropper 2021.txt"
+parser=ArgumentParser()
+parser.add_argument('-d','--dir',nargs='?',required=True)
+args=parser.parse_args()
+
+ChatFilePath=args.dir
 CachePath="./cache.csv"
 
 cmdExists=lambda cmd: which(cmd) is not None
+isTermux=False
 if system().lower()=="linux":
     isTermux=getoutput("echo $PREFIX | grep 'com.termux'").strip() != ''
-else:
-    isTermux=False
 
-try:
-    parsedData=chat(ChatFilePath).get()
-except:
+if os.path.isfile(ChatFilePath):
+    parsedData=ChatParser(ChatFilePath).get
+else:
     if cmdExists('termux-toast'):
         os.system('termux-toast -s -b white -c black Error FileNotFound')
     exit(-1)
 
 cache_exists=os.path.isfile(CachePath)
+Cache=None
 if cache_exists:
     with open(CachePath, newline='') as f:
         Cache=list(csv.reader(f))
-else: 
-    Cache=None
 
 recLectureData=[]
 #Regex to match zoom links
