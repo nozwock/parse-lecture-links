@@ -32,18 +32,18 @@ class ChatParser:
                 else:
                     messageBuffer.append(line)
                     # if a line doesn't start with a date time (i.e. the message is in continuation)
-     
+
     @property
     def get(self) -> list:
         return self.parsedData
-    
+
     def export_csv(self, file: str, 
            header=['Date', 'Time', 
            'Author', 'Message']) -> None:
         assert (isinstance(header,(list,str)) and len(header)==4),('Improper header!')
         with open(file,'w+') as export:
             csv.writer(export).writerows([header]+self.get())
-         
+
     @staticmethod
     def _startsWithDateTime(s: str) -> bool:
         ''''regex to identify date time pattern'''

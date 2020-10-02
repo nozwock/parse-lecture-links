@@ -42,21 +42,26 @@ recSearch=lambda x: re.search('https\:\/\/us\d{2}web\.zoom\.us\/rec',x)
 ytbSearch=lambda x: re.search('https\:\/\/youtu.be|https\:\/\/www.youtube',x)
 descCheck=lambda s,x: re.search(f'({s})',x,re.I)
 
+KeyList=['dropper','lecture']
+assert (isinstance(KeyList,(list,str))),('Invalid Keywords!')
+#Statement to check if atleast one keyword from KeyList is present or not
+KeyExists=lambda e:"("+" or ".join(
+    ["descCheck('%s',parsedData[%s][-1])"%(i,e) for i in KeyList])+")"
+
 #Parsing chat to get <links>, their <description>, & <date>
 for i, j in enumerate(parsedData):
     dataBuffer=[]
     if recSearch(j[-1]):
         #! Zoom links section
         #Regex to get the zoom rec link from text
-        lnk=re.search('(((https\:\/\/us\d{2}web\.zoom\.us\/rec)(.*)(startTime=[\d]+))'
-        '|((https\:\/\/us\d{2}web\.zoom\.us\/rec\/share\/)([^\s]+)))',j[-1]).group(1)
+        lnk=re.search(
+            '(((https\:\/\/us\d{2}web\.zoom\.us\/rec)(.*)(startTime=[\d]+))'
+            '|((https\:\/\/us\d{2}web\.zoom\.us\/rec\/share\/)([^\s]+)))',j[-1]).group(1)
         #Appending link
         dataBuffer.append(lnk)
         #For description
         try:
-            if (not recSearch(parsedData[i+1][-1]) and 
-                (descCheck('lecture',parsedData[i+1][-1]) or 
-                descCheck('dropper',parsedData[i+1][-1]))):
+            if (not recSearch(parsedData[i+1][-1]) and eval(KeyExists('i+1'))):
                 #i.e. description is in the next line
                 #Appending description
                 dataBuffer.append(parsedData[i+1][-1])
@@ -67,33 +72,40 @@ for i, j in enumerate(parsedData):
                     find=0
                     for k in range(1,4+1):
                         #Trying to find description of the link for upto 4 trials
-                        if (descCheck('lecture',parsedData[(i+1)+k][-1]) or 
-                           descCheck('dropper',parsedData[(i+1)+k][-1])):
+                        if eval(KeyExists('(i+1)+k')):
                             find=1
                             break
                     #Appending description if found
                     if find: dataBuffer.append(parsedData[(i+1)+k][-1])
                     else:
                         #If not found even after that, then using a generic description
-                        share_code=re.search('\/share\/([^\s]+)(([\?])|.)',parsedData[i+1][-1]).group(1)
-                        dataBuffer.append(f'Unknown Title (link_code): {share_code[:12]}...')
+                        share_code=re.search(
+                            '\/share\/([^\s]+)(([\?])|.)',parsedData[i+1][-1]).group(1)
+                        dataBuffer.append(
+                            f'Unknown Title (link_code): {share_code[:12]}...')
                         del share_code
                 else:
                     #For link not starting at 0 index, i.e. there's some text before it
                     #So, we'll use that text as our description
-                    trim=re.search('Start Time \:.*',j[-1].replace(lnk,'').strip(),re.I)
+                    trim=re.search(
+                        'Start Time \:.*',j[-1].replace(lnk,'').strip(),re.I)
                     if trim:
-                        dataBuffer.append(j[-1].replace(lnk,'').strip().replace(trim.group(0),'').strip())
+                        dataBuffer.append(
+                            j[-1].replace(lnk,'').strip().replace(trim.group(0),'').strip())
                     else:
-                        dataBuffer.append(j[-1].replace(lnk,'').strip())
-        except: 
+                        dataBuffer.append(
+                            j[-1].replace(lnk,'').strip())
+        except IndexError: 
             #most likely IndexError for 'i+1' while checking for next line
             #i.e. next line does not exist, so use the text as description
-            trim=re.search('Start Time \:.*',j[-1].replace(lnk,'').strip(),re.I)
+            trim=re.search(
+                'Start Time \:.*',j[-1].replace(lnk,'').strip(),re.I)
             if trim:
-                dataBuffer.append(j[-1].replace(lnk,'').strip().replace(trim.group(0),'').strip())
+                dataBuffer.append(
+                    j[-1].replace(lnk,'').strip().replace(trim.group(0),'').strip())
             else:
-                dataBuffer.append(j[-1].replace(lnk,'').strip())
+                dataBuffer.append(
+                    j[-1].replace(lnk,'').strip())
     elif ytbSearch(j[-1]):
         #! Youtube links section
         #Regex for type1 links
@@ -130,7 +142,8 @@ for i, j in enumerate(parsedData):
             except Exception as e:
                 print(repr(e))
                 if cmdExists('termux-toast'):
-                    os.system('termux-toast -s -b white -c black Connection Error')
+                    os.system(
+                        'termux-toast -s -b white -c black Connection Error')
                 continue
             #Generating cache
             with open(CachePath,'a+') as f:
@@ -154,14 +167,15 @@ with open(ExpFileName,'w+') as f:
         f.write(f'**`{j[2]}`**\n')
         f.write(f'> [{j[1]}]({j[0]})')
         if pos: f.write('\n\n')
-          
+
 if isTermux:
     #Copy to clipboard
     os.system('termux-clipboard-set < %s'%(ExpFileName))
     #Clean up
     os.remove(ExpFileName)
     #Verbose message
-    os.system('termux-toast -s -b white -c black Copied to clipboard!')
+    os.system(
+        'termux-toast -s -b white -c black Copied to clipboard!')
     #Open link to edit with new data
     os.system('termux-open-url %s'%getoutput('cat ~/.link'))
 os.remove(ChatFilePath)
