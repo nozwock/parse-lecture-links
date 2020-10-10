@@ -10,6 +10,6 @@
 ![-----------------------------------------------------](
 https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
 ## Usage
-```sh
-$ python src/core.py --dir <path>
+```console
+$ python -m src.core --dir <path>
 ```

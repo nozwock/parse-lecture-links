@@ -1,37 +1,40 @@
 #! Script made for a specific use case
 import sys, os, re, csv
-
-dir = lambda e: os.path.dirname(e)
-sys.path.append(dir(dir(os.path.abspath(__file__))))
-from tools.data_scraping import YoutubeTitle
-from lib.whatsChat import ChatParser
+from .tools.data_scraping import YoutubeTitle
+from .lib.whatsChat import ChatParser
 from argparse import ArgumentParser
 from subprocess import getoutput
 from platform import system
 from shutil import which
+from pathlib import Path
 
 
 parser = ArgumentParser()
 parser.add_argument("-d", "--dir", nargs="?", required=True)
 args = parser.parse_args()
 
-ChatFilePath = args.dir
-CachePath = "./cache.csv"
+data_dir = Path(__file__).resolve().parent.parent.joinpath("data")
+if not data_dir.is_dir():
+    data_dir.mkdir()
+
+ChatFilePath = Path(args.dir)
+CachePath = data_dir.joinpath("cache.csv")
 
 cmdExists = lambda cmd: which(cmd) is not None
 isTermux = False
 if system().lower() == "linux":
     isTermux = getoutput("echo $PREFIX | grep 'com.termux'").strip() != ""
 
-if os.path.isfile(ChatFilePath):
+if ChatFilePath.is_file():
     parsedData = ChatParser(ChatFilePath).get
     # Date, Time, Author, Message
 else:
     if cmdExists("termux-toast"):
         os.system("termux-toast -s -b white -c black Error FileNotFound")
+    print("Error FileNotFound")
     exit(-1)
 
-cache_exists = os.path.isfile(CachePath)
+cache_exists = CachePath.is_file()
 Cache = None
 if cache_exists:
     with open(CachePath, newline="") as f:
@@ -178,7 +181,7 @@ for i, j in enumerate(parsedData):
                 id = id2_get
             # Appending description
             try:
-                dataBuffer.append(YotubeTitle(id))
+                dataBuffer.append(YoutubeTitle(id))
             except Exception as e:
                 print(repr(e))
                 if cmdExists("termux-toast"):
@@ -226,4 +229,4 @@ if isTermux:
     os.system("termux-toast -s -b white -c black Copied to clipboard!")
     # Open link to edit with new data
     os.system("termux-open-url %s" % getoutput("cat ~/.link"))
-os.remove(ChatFilePath)
+ChatFilePath.unlink()

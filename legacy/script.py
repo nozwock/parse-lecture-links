@@ -1,3 +1,4 @@
+# DEPRECATED
 from wchat import chat
 import re
 
