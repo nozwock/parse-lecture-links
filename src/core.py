@@ -7,6 +7,7 @@ from subprocess import getoutput
 from platform import system
 from shutil import which
 from pathlib import Path
+from datetime import datetime
 
 
 parser = ArgumentParser()
@@ -195,9 +196,11 @@ for i, j in enumerate(parsedData):
         continue
     # Swapping dates and months position
     dt = j[0].split("/")
-    dt[0], dt[1] = dt[1], dt[0]
+    dt[2] = "20{}".format(dt[2])
+    dt = datetime.strptime("-".join(dt), "%m-%d-%Y")
+    dt = dt.strftime("%d %b %Y")
     # Appending date
-    dataBuffer.append("/".join(dt))
+    dataBuffer.append(dt)
     access_code = re.search(r"(?P<code>Access Passcode\:\s+\S+)", dataBuffer[1], re.I)
     if access_code:
         dataBuffer[1] = dataBuffer[1].replace(access_code.group("code"), "").strip()
