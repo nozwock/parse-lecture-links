@@ -59,11 +59,17 @@ for i, j in enumerate(parsedData):
     if recSearch(j[-1]):
         #! Zoom links section
         # Regex to get the zoom rec link from text
+
+        # lnk = re.search(
+        #    "(((https\:\/\/us\d{2}web\.zoom\.us\/rec)(.*)(startTime=[\d]+))"
+        #    "|((https\:\/\/us\d{2}web\.zoom\.us\/rec\/share\/)([^\s]+)))",
+        #    j[-1],
+        # ).group(1)
         lnk = re.search(
-            "(((https\:\/\/us\d{2}web\.zoom\.us\/rec)(.*)(startTime=[\d]+))"
-            "|((https\:\/\/us\d{2}web\.zoom\.us\/rec\/share\/)([^\s]+)))",
+            "https\:\/\/us\d{2}web\.zoom\.us\/rec\/share\/\S+startTime=[\d]+"
+            "|https\:\/\/us\d{2}web\.zoom\.us\/rec\/share\/\S+",
             j[-1],
-        ).group(1)
+        ).group()
         # Appending link
         dataBuffer.append(lnk)
         # For description
@@ -87,9 +93,13 @@ for i, j in enumerate(parsedData):
                         dataBuffer.append(parsedData[(i + 1) + k][-1])
                     else:
                         # If not found even after that, then using a generic description
+                        # share_code = re.search(
+                        #    "\/share\/([^\s]+)(([\?])|.)", parsedData[i + 1][-1]
+                        # ).group(1)
                         share_code = re.search(
-                            "\/share\/([^\s]+)(([\?])|.)", parsedData[i + 1][-1]
-                        ).group(1)
+                            "(?<=\/share\/)\S+(?=\?)|(?<=\/share\/)\S+",
+                            parsedData[i + 1][-1],
+                        ).group()
                         dataBuffer.append(
                             f"Unknown Title (link_code): {share_code[:12]}..."
                         )
@@ -99,7 +109,10 @@ for i, j in enumerate(parsedData):
                     # So, we'll use that text as our description
                     # trim=re.search(
                     #    'Start Time \:.*',j[-1].replace(lnk,'').strip(),re.I)
-                    desc_pattern = r"(?P<time>Start Time \:.+?(AM)|(PM)).+(?P<meet>Meeting Recording\:).+"
+                    desc_pattern = (
+                        r"(?P<time>Start Time \:.+?(AM)|(PM)).+"
+                        "(?P<meet>Meeting Recording\:).+"
+                    )
                     desc_code = r"(?P<code>Access Passcode\:\s+\S+)"
                     trim = re.search(desc_pattern + desc_code, j[-1], re.I)
                     if trim:
@@ -137,9 +150,9 @@ for i, j in enumerate(parsedData):
                     dataBuffer.append(j[-1].replace(lnk, "").strip())
     elif ytbSearch(j[-1]):
         #! Youtube links section
-        # Regex for type1 links
+        # Regex for id type1 links
         # https://youtu.be/<id>
-        ytbType1 = re.search("https\:\/\/youtu.be\/", j[-1])
+        id1_get = re.search("(?<=https\:\/\/youtu.be\/)\S+", j[-1])
         # Regex for id of type2 links
         # https://www.youtube.com/...?v=<id>&...
         id2_get = re.search("\/v\/(.+?(?=\?))|\?v=(.+?(?=\&))", j[-1])
@@ -156,15 +169,13 @@ for i, j in enumerate(parsedData):
             # Appending link
             dataBuffer.append(j[-1])
             # Getting id of Youtube link
-            if ytbType1:
+            if id1_get:
                 # Type1 link
-                id = j[-1].replace(ytbType1.group(), "").strip()
+                id = id1_get.group().strip()
             else:
                 # Type2 link
-                if id2_get.group(1):
-                    id = id2_get.group(1)
-                else:
-                    id = id2_get.group(2)
+                id2_get = [i for i in id2_get.groups() if i is not None][0]
+                id = id2_get
             # Appending description
             try:
                 dataBuffer.append(YotubeTitle(id))
