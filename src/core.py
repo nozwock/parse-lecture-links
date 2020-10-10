@@ -24,6 +24,7 @@ if system().lower()=="linux":
 
 if os.path.isfile(ChatFilePath):
     parsedData=ChatParser(ChatFilePath).get
+    #Date, Time, Author, Message
 else:
     if cmdExists('termux-toast'):
         os.system('termux-toast -s -b white -c black Error FileNotFound')
@@ -48,7 +49,7 @@ assert (isinstance(KeyList,(list,str))),('Invalid Keywords!')
 KeyExists=lambda e:"("+" or ".join(
     ["descCheck('%s',parsedData[%s][-1])"%(i,e) for i in KeyList])+")"
 
-#Parsing chat to get <links>, their <description>, & <date>
+#Parsing chat to get [<links>, <description>, <date>, Optional[<access_code>]]
 for i, j in enumerate(parsedData):
     dataBuffer=[]
     if recSearch(j[-1]):
@@ -87,25 +88,42 @@ for i, j in enumerate(parsedData):
                 else:
                     #For link not starting at 0 index, i.e. there's some text before it
                     #So, we'll use that text as our description
-                    trim=re.search(
-                        'Start Time \:.*',j[-1].replace(lnk,'').strip(),re.I)
+                    #trim=re.search(
+                    #    'Start Time \:.*',j[-1].replace(lnk,'').strip(),re.I)
+                    desc_pattern = r"(?P<time>Start Time \:.+?(AM)|(PM)).+(?P<meet>Meeting Recording\:).+"
+                    desc_code = r"(?P<code>Access Passcode\:\s+\S+)"
+                    trim = re.search(desc_pattern+desc_code,j[-1],re.I)
                     if trim:
+                        #Access code is present
                         dataBuffer.append(
-                            j[-1].replace(lnk,'').strip().replace(trim.group(0),'').strip())
+                            (j[-1].replace(trim.group(),'')+trim.group('code')).strip())
                     else:
-                        dataBuffer.append(
-                            j[-1].replace(lnk,'').strip())
+                        # No Access code found
+                        trim = re.search(desc_pattern,j[-1],re.I)
+                        if trim:
+                            dataBuffer.append(
+                                j[-1].replace(trim.group(),'').strip())
+                        else:
+                            # Not much stuff found, removing link from desc
+                            dataBuffer.append(
+                                j[-1].replace(lnk,'').strip())
         except IndexError: 
             #most likely IndexError for 'i+1' while checking for next line
             #i.e. next line does not exist, so use the text as description
-            trim=re.search(
-                'Start Time \:.*',j[-1].replace(lnk,'').strip(),re.I)
+            desc_pattern = r"(?P<time>Start Time \:.+?(AM)|(PM)).+(?P<meet>Meeting Recording\:).+"
+            desc_code = r"(?P<code>Access Passcode\:\s+\S+)"
+            trim = re.search(desc_pattern+desc_code,j[-1],re.I)
             if trim:
                 dataBuffer.append(
-                    j[-1].replace(lnk,'').strip().replace(trim.group(0),'').strip())
+                    (j[-1].replace(trim.group(),'')+trim.group('code')).strip())
             else:
-                dataBuffer.append(
-                    j[-1].replace(lnk,'').strip())
+                trim = re.search(desc_pattern,j[-1],re.I)
+                if trim:
+                    dataBuffer.append(
+                        j[-1].replace(trim.group(),'').strip())
+                else:
+                    dataBuffer.append(
+                        j[-1].replace(lnk,'').strip())
     elif ytbSearch(j[-1]):
         #! Youtube links section
         #Regex for type1 links
@@ -156,7 +174,14 @@ for i, j in enumerate(parsedData):
     dt[0],dt[1]=dt[1],dt[0]
     #Appending date
     dataBuffer.append('/'.join(dt))
-    recLectureData.append(dataBuffer)
+    access_code = re.search(r"(?P<code>Access Passcode\:\s+\S+)",dataBuffer[1],re.I)
+    if access_code:
+        dataBuffer[1]=dataBuffer[1].replace(access_code.group('code'),"").strip()
+        #Appending access_code
+        dataBuffer.append(access_code.group('code'))
+    else:
+        dataBuffer.append(None)
+    recLectureData.append(dataBuffer)# [<link>,<desc>,<date>,Optional[<access_code>]]
 
 ExpFileName='export.md'
 with open(ExpFileName,'w+') as f:
@@ -166,6 +191,7 @@ with open(ExpFileName,'w+') as f:
         pos=((len(recLectureData)-1)!=i)
         f.write(f'**`{j[2]}`**\n')
         f.write(f'> [{j[1]}]({j[0]})')
+        if j[3]: f.write(f'\n> `{j[3]}`')
         if pos: f.write('\n\n')
 
 if isTermux:
