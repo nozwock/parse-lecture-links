@@ -114,7 +114,7 @@ for i, j in enumerate(parsedData):
                     # trim=re.search(
                     #    'Start Time \:.*',j[-1].replace(lnk,'').strip(),re.I)
                     desc_pattern = (
-                        r"(?P<time>Start Time \:.+?(AM)|(PM)).+"
+                        r"(?P<time>Start Time \:.+?(AM|PM)).+"
                         "(?P<meet>Meeting Recording\:).+"
                     )
                     desc_code = r"(?P<code>Access Passcode\:\s+\S+)"
@@ -138,7 +138,7 @@ for i, j in enumerate(parsedData):
             # most likely IndexError for 'i+1' while checking for next line
             # i.e. next line does not exist, so use the text as description
             desc_pattern = (
-                r"(?P<time>Start Time \:.+?(AM)|(PM)).+(?P<meet>Meeting Recording\:).+"
+                r"(?P<time>Start Time \:.+?(AM|PM)).+(?P<meet>Meeting Recording\:).+"
             )
             desc_code = r"(?P<code>Access Passcode\:\s+\S+)"
             trim = re.search(desc_pattern + desc_code, j[-1], re.I)
