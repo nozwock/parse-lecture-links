@@ -7,8 +7,7 @@
     </sub>
 </p>
 
-![-----------------------------------------------------](
-https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/aqua.png)
+---
 ## Usage
 ```console
 $ python -m src.core --dir <path>
