@@ -10,20 +10,47 @@ from pathlib import Path
 from datetime import datetime
 
 
-parser = ArgumentParser()
-parser.add_argument("-p", "--path", type=str, nargs="?", required=True)
+parser = ArgumentParser(
+    description="parse-lecture-links: scrape lecture links from whatsapp chat file"
+)
+parser.add_argument(
+    "path",
+    help="parses [FILE] to get lecture links eg.'WhatsApp Chat with xxx.txt'",
+    nargs=1,
+    type=str,
+    metavar="FILE",
+)
 parser.add_argument(
     "-o",
     "--output",
+    help="write output to [FILE]",
     nargs="?",
     type=str,
     required=False,
     default=Path("output.md"),
-    metavar="PATH",
+    metavar="FILE",
 )
-parser.add_argument("-l", "--link", nargs="?", type=str, required=False, metavar="URL")
-parser.add_argument("--clear-output", action="store_true", required=False)
-parser.add_argument("--copy-output", action="store_true", required=False)
+parser.add_argument(
+    "-l",
+    "--link",
+    help="open [URL] at exit",
+    nargs="?",
+    type=str,
+    required=False,
+    metavar="URL",
+)
+parser.add_argument(
+    "--copy-output",
+    help="copy output to clipboard",
+    action="store_true",
+    required=False,
+)
+parser.add_argument(
+    "--clear",
+    help="remove output file and chat file at exit",
+    action="store_true",
+    required=False,
+)
 args = parser.parse_args()
 
 output_choices = {"md": ".md", "csv": ".csv", "txt": ".txt"}
@@ -40,7 +67,7 @@ data_dir = Path(__file__).resolve().parent.parent.joinpath("data")
 if not data_dir.is_dir():
     data_dir.mkdir()
 
-ChatFilePath = Path(args.path)
+ChatFilePath = Path(args.path[0])
 CachePath = data_dir.joinpath("cache.csv")
 
 cmdExists = lambda cmd: which(cmd) is not None
@@ -254,7 +281,7 @@ if isTermux:
         # Verbose message
         os.system("termux-toast -s -b white -c black Copied to clipboard!")
     # Clean up
-    if args.clear_output:
+    if args.clear:
         args.output.unlink()
         ChatFilePath.unlink()
     if args.link:
