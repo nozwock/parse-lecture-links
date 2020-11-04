@@ -3,12 +3,15 @@
 </h1>
 <p align="center">
     <sub>
-        This repo is intended for a specific use case only.
+	Scrapes lecture links from WhatsApp Chat file.
+    </sub><br/>
+    <sub>
+        <b>!!</b> This repo is intended for a specific use case only
     </sub>
 </p>
 
 ---
 ## Usage
 ```console
-$ python -m src.core --path <path>
+$ python -m src.core <file>
 ```
