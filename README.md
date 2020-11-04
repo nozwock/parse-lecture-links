@@ -10,5 +10,5 @@
 ---
 ## Usage
 ```console
-$ python -m src.core --dir <path>
+$ python -m src.core --path <path>
 ```

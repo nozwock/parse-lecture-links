@@ -11,14 +11,36 @@ from datetime import datetime
 
 
 parser = ArgumentParser()
-parser.add_argument("-d", "--dir", nargs="?", required=True)
+parser.add_argument("-p", "--path", type=str, nargs="?", required=True)
+parser.add_argument(
+    "-o",
+    "--output",
+    nargs="?",
+    type=str,
+    required=False,
+    default=Path("output.md"),
+    metavar="PATH",
+)
+parser.add_argument("-l", "--link", nargs="?", type=str, required=False, metavar="URL")
+parser.add_argument("--clear-output", action="store_true", required=False)
+parser.add_argument("--copy-output", action="store_true", required=False)
 args = parser.parse_args()
+
+output_choices = {"md": ".md", "csv": ".csv", "txt": ".txt"}
+# Output path check
+output_path = Path(args.output).resolve()
+if not output_path.parent.is_dir() or output_path.suffix == "":
+    print("error: Enter valid path for output file")
+    exit(-1)
+if output_path.suffix not in list(output_choices.values()):
+    print("error: Supported file formats are {}".format(list(output_choices.values())))
+    exit(-1)
 
 data_dir = Path(__file__).resolve().parent.parent.joinpath("data")
 if not data_dir.is_dir():
     data_dir.mkdir()
 
-ChatFilePath = Path(args.dir)
+ChatFilePath = Path(args.path)
 CachePath = data_dir.joinpath("cache.csv")
 
 cmdExists = lambda cmd: which(cmd) is not None
@@ -31,8 +53,8 @@ if ChatFilePath.is_file():
     # Date, Time, Author, Message
 else:
     if cmdExists("termux-toast"):
-        os.system("termux-toast -s -b white -c black Error FileNotFound")
-    print("Error FileNotFound")
+        os.system("termux-toast -s -b white -c black error: File not found")
+    print("error: File not found")
     exit(-1)
 
 cache_exists = CachePath.is_file()
@@ -210,26 +232,31 @@ for i, j in enumerate(parsedData):
         dataBuffer.append(None)
     recLectureData.append(dataBuffer)  # [<link>,<desc>,<date>,Optional[<access_code>]]
 
-ExpFileName = "export.md"
-with open(ExpFileName, "w+") as f:
-    f.write("### Recent ↑\n")
-    for i, j in enumerate(recLectureData[::-1]):
-        # Check if not last index
-        pos = (len(recLectureData) - 1) != i
-        f.write(f"**`{j[2]}`**\n")
-        f.write(f"> [{j[1]}]({j[0]})")
-        if j[3]:
-            f.write(f"\n> `{j[3]}`")
-        if pos:
-            f.write("\n\n")
+with args.output.open("w+") as f:
+    if args.output.suffix == output_choices["md"]:
+        f.write("### Recent ↑\n")
+        for i, j in enumerate(recLectureData[::-1]):
+            # Check if not last index
+            pos = (len(recLectureData) - 1) != i
+            f.write(f"**`{j[2]}`**\n")
+            f.write(f"> [{j[1]}]({j[0]})")
+            if j[3]:
+                f.write(f"\n> `{j[3]}`")
+            if pos:
+                f.write("\n\n")
+    else:
+        raise NotImplementedError
 
 if isTermux:
     # Copy to clipboard
-    os.system("termux-clipboard-set < %s" % (ExpFileName))
+    if args.copy_output:
+        os.system("termux-clipboard-set < %s" % (str(args.output.resolve())))
+        # Verbose message
+        os.system("termux-toast -s -b white -c black Copied to clipboard!")
     # Clean up
-    os.remove(ExpFileName)
-    # Verbose message
-    os.system("termux-toast -s -b white -c black Copied to clipboard!")
-    # Open link to edit with new data
-    os.system("termux-open-url %s" % getoutput("cat ~/.link"))
-ChatFilePath.unlink()
+    if args.clear_output:
+        args.output.unlink()
+        ChatFilePath.unlink()
+    if args.link:
+        # Open link to edit with new datab
+        os.system("termux-open-url %s" % args.link)
