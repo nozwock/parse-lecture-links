@@ -11,7 +11,7 @@ from datetime import datetime
 
 
 parser = ArgumentParser(
-    description="parse-lecture-links: scrape lecture links from whatsapp chat file"
+    description="parse-lecture-links: scrapes lecture links from whatsapp chat file"
 )
 parser.add_argument(
     "path",
@@ -37,6 +37,7 @@ parser.add_argument(
     nargs="?",
     type=str,
     required=False,
+    default=False,
     metavar="URL",
 )
 parser.add_argument(
