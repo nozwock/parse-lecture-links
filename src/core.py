@@ -21,6 +21,16 @@ parser.add_argument(
     metavar="FILE",
 )
 parser.add_argument(
+    "-a",
+    "--add",
+    help="Add additional links through a csv [FILE] formatted as <link>, <description>, <date>, <access_code>",
+    nargs="?",
+    type=str,
+    required=False,
+    default=None,
+    metavar="FILE",
+)
+parser.add_argument(
     "-o",
     "--output",
     help="write output to [FILE]",
@@ -54,6 +64,14 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+# Add file check
+if args.add:
+    add_file_choice = ".csv"
+    add_file_path = Path(args.add).resolve()
+    if add_file_path.suffix != add_file_choice:
+        print("error: Supported file formats are {}".format(add_file_choice))
+        exit(-1)
+
 output_choices = {"md": ".md", "csv": ".csv", "txt": ".txt"}
 # Output path check
 output_path = Path(args.output).resolve()
@@ -63,6 +81,15 @@ if not output_path.parent.is_dir() or output_path.suffix == "":
 if output_path.suffix not in list(output_choices.values()):
     print("error: Supported file formats are {}".format(list(output_choices.values())))
     exit(-1)
+
+if args.add:
+    AddLinks = None
+    with open(add_file_path, newline="") as f:
+        AddLinks = list(csv.reader(f))
+    for i in AddLinks:
+        if len(i) != 4:
+            print("error: Incompatible data")
+            exit(-1)
 
 data_dir = Path(__file__).resolve().parent.parent.joinpath("data")
 if not data_dir.is_dir():
@@ -248,7 +275,7 @@ for i, j in enumerate(parsedData):
     dt = j[0].split("/")
     dt[2] = "20{}".format(dt[2])
     dt = datetime.strptime("-".join(dt), "%m-%d-%Y")
-    dt = dt.strftime("%d %b %Y")
+    dt = dt.strftime("%d-%m-%Y")
     # Appending date
     dataBuffer.append(dt)
     access_code = re.search(r"(?P<code>Access Passcode\:\s+\S+)", dataBuffer[1], re.I)
@@ -260,6 +287,15 @@ for i, j in enumerate(parsedData):
         dataBuffer.append(None)
     recLectureData.append(dataBuffer)  # [<link>,<desc>,<date>,Optional[<access_code>]]
 
+if args.add:
+    recLectureData.extend(AddLinks)
+    recLectureData = sorted(
+        recLectureData, key=lambda x: datetime.strptime(x[2], "%d-%m-%Y")
+    )
+
+for data in recLectureData:
+    data[2] = datetime.strptime(data[2], "%d-%m-%Y").strftime("%d %b %Y")
+
 with args.output.open("w+") as f:
     if args.output.suffix == output_choices["md"]:
         f.write("### Recent ↑\n")
@@ -268,7 +304,7 @@ with args.output.open("w+") as f:
             pos = (len(recLectureData) - 1) != i
             f.write(f"**`{j[2]}`**\n")
             f.write(f"> [{j[1]}]({j[0]})")
-            if j[3]:
+            if j[3]:  # Access code
                 f.write(f"\n> `{j[3]}`")
             if pos:
                 f.write("\n\n")
